@@ -1,0 +1,323 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: laredonunes/geminai_2025
+    source: https://github.com/laredonunes/geminai_2025
+    branch: master
+    commit: "29f9f255"
+    scope: [config.py, utils/agente_ENEM.py, utils/agente_calendar.py, utils/agente_de_busca.py, utils/agents_exatas.py, utils/agents_humanas.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T16:56:37Z'
+    url: https://a2as.org/certified/agents/laredonunes/geminai_2025
+  signatures:
+    digest: sha256:J4-j0Ev0OEwrhQKlztlDsgIQNkWL96lSUe75cKBXI4w
+    key: ed25519:Tm38md3ep6Yigfu0zpSmOXZv9kKaHAyyTJ-wicE2aVo
+    sig: ed25519:I-k401bbfkcZduaeRsshwYRYela--QB9LeWzUL4W-y0vs1txrRIc5ATjOOS0kX2gMSS1HG7LoW-yH5vS-yJ7DA
+
+agents:
+  agent.ClassifierAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: ClassifierAgent
+      base: BaseAgent
+  agent.ClassifierAgentHumanas:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: ClassifierAgentHumanas
+      base: BaseAgent
+  agent.DidacticAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: DidacticAgent
+      base: BaseAgent
+  agent.DidacticAgentHumanas:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: DidacticAgentHumanas
+      base: BaseAgent
+  agent.ReviewAgent:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: ReviewAgent
+      base: BaseAgent
+  agent.ReviewAgentHumanas:
+    type: class
+    models: [gemini-2.5-flash]
+    params:
+      class: ReviewAgentHumanas
+      base: BaseAgent
+  agent_18:
+    type: anonymous
+    models: [gemini-1.5-flash-latest]
+    params:
+      name: task_classifier
+      instruction: ['Avalie se a entrada do usuário indica:', '- Uma tarefa interna (ex.: adicionar conteúdo, limpar cache)',
+        '- Ou uma busca na internet (ex.: ''buscar X'', ''pesquisar Y'')', 'Retorne apenas ''true'' para tarefa ou busca,
+          caso contrário ''false''.']
+  agent_19:
+    type: anonymous
+    models: [gemini-1.5-flash-001]
+    tools: [google_search]
+    params:
+      name: search_agent
+      instruction: ['Quando o usuário pedir para ''buscar X'' ou ''pesquisar X'', use a ferramenta google_search(X)', e retorne
+          um breve resumo dos resultados., 'Caso contrário, retorne ''NO_SEARCH''.']
+  extract_agent:
+    type: instance
+    models: [gemini-1.5-flash-latest]
+    params:
+      name: calendar_extractor
+      instruction: [Você recebe um texto de usuário solicitando criação de evento na agenda., 'Extraia e retorne somente um
+          objeto JSON com as seguintes chaves:', '- "summary": título do evento', '- "description": descrição opcional', '-
+          "start": data e hora de início no formato ISO (ex: 2025-06-01T14:00:00)', '- "end": data e hora de término no formato
+          ISO']
+  pipeline.clf.0:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgent
+      instance: pipeline.clf
+  pipeline.clf.1:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgentHumanas
+      instance: pipeline.clf
+  pipeline.complex.0:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgent
+      instance: pipeline.complex
+  pipeline.complex.1:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgentHumanas
+      instance: pipeline.complex
+  pipeline.didactic.0:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgent
+      instance: pipeline.didactic
+  pipeline.didactic.1:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgentHumanas
+      instance: pipeline.didactic
+  pipeline.review.0:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgent
+      instance: pipeline.review
+  pipeline.review.1:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgentHumanas
+      instance: pipeline.review
+  pipeline.simple.0:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgent
+      instance: pipeline.simple
+  pipeline.simple.1:
+    type: instance
+    models: [gemini-2.5-flash]
+    params:
+      class: PipelineAgentHumanas
+      instance: pipeline.simple
+
+models:
+  gemini-1.5-flash-001:
+    type: literal
+    agents: [agent_19]
+  gemini-1.5-flash-latest:
+    type: literal
+    agents: [extract_agent, agent_18]
+    params:
+      alias: [models/gemini-1.5-flash-latest]
+  gemini-2.5-flash:
+    type: default
+    agents: [pipeline.clf.0, pipeline.simple.0, pipeline.complex.0, pipeline.review.0, pipeline.didactic.0, pipeline.clf.1,
+      pipeline.simple.1, pipeline.complex.1, pipeline.review.1, pipeline.didactic.1, agent.ClassifierAgent, agent.ReviewAgent,
+      agent.DidacticAgent, agent.ClassifierAgentHumanas, agent.ReviewAgentHumanas, agent.DidacticAgentHumanas]
+
+tools:
+  google_search:
+    type: module
+    agents: [agent_19]
+
+imports:
+  Any: typing.Any
+  build: googleapiclient.discovery.build
+  buscar_cursos: utils.api_dados.buscar_cursos
+  carregar_conteudos: data.contudo.carregar_conteudos
+  carregar_noticias: data.contudo.carregar_noticias
+  classify_area: utils.agents_classificador_ciencias.classify_area
+  consulta_gemini: utils.gemini_client.consulta_gemini
+  datetime: datetime.datetime
+  exatas_remota: utils.agents_exatas.exatas_remota
+  fetch_bolsas_markdown: data.bolsa_vest_int.fetch_bolsas_markdown
+  find_dotenv: dotenv.find_dotenv
+  Flask: flask.Flask
+  genai: google.generativeai
+  get_env_var: config.get_env_var
+  google_search: google.adk.tools.google_search
+  humanas_remota: utils.agents_humanas.humanas_remota
+  InMemorySessionService: google.adk.sessions.InMemorySessionService
+  is_task: utils.agents_classificador.is_task
+  json: json
+  jsonify: flask.jsonify
+  LlmAgent: google.adk.agents.LlmAgent
+  load_dotenv: dotenv.load_dotenv
+  logging: logging
+  markdown: markdown.markdown
+  Optional: typing.Optional
+  os: os
+  otimizar_prompt_e_modelo: utils.refinamento_prompt.otimizar_prompt_e_modelo
+  render_template: flask.render_template
+  request: flask.request
+  Runner: google.adk.runners.Runner
+  service_account: google.oauth2.service_account
+  summarize_relevant_history: utils.memoria.summarize_relevant_history
+  types: google.genai.types
+  uuid: uuid
+
+functions:
+  __init__:
+    type: sync
+    module: utils.agents_humanas
+    args: [self]
+  _make_content:
+    type: sync
+    module: utils.agente_de_busca
+    args: [text]
+    params:
+      returns: types.Content
+  complexity:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, text]
+    params:
+      returns: str
+  cursos:
+    type: sync
+    module: app
+  exatas_remota:
+    type: sync
+    module: utils.agents_exatas
+    args: [pergunta]
+  get_env_var:
+    type: sync
+    module: config
+    args: [key]
+    params:
+      returns: str
+  get_system_instructions:
+    type: sync
+    module: app
+    params:
+      returns: str
+  handle:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, user_input]
+    params:
+      returns: str
+  humanas_remota:
+    type: sync
+    module: utils.agents_humanas
+    args: [pergunta]
+    params:
+      returns: str
+  index:
+    type: sync
+    module: app
+  index1:
+    type: sync
+    module: app
+  is_humanas:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, text]
+    params:
+      returns: bool
+  is_math:
+    type: sync
+    module: utils.agents_exatas
+    args: [self, text]
+    params:
+      returns: bool
+  is_task:
+    type: sync
+    module: utils.agente_ENEM
+    args: [prompt]
+    params:
+      returns: bool
+  make_didactic:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, text]
+    params:
+      returns: str
+  perform_search:
+    type: sync
+    module: utils.agente_ENEM
+    args: [prompt]
+    params:
+      returns: Optional[str]
+  perguntar:
+    type: sync
+    module: app
+  run:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, prompt]
+    params:
+      returns: str
+  schedule_event:
+    type: sync
+    module: utils.agente_calendar
+    args: [prompt]
+    params:
+      returns: dict
+  search_web:
+    type: sync
+    module: utils.agente_de_busca
+    args: [prompt, user_id]
+    params:
+      returns: Optional[str]
+  sobre:
+    type: sync
+    module: app
+  solve:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, question]
+    params:
+      returns: str
+  verify:
+    type: sync
+    module: utils.agents_humanas
+    args: [self, text]
+    params:
+      returns: bool
+
+variables:
+  key:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [env_path]
